@@ -50,7 +50,7 @@ class config:
         self.path = os.path.join(self.root, file+'.'+ext)
         self.vars = getvars(self.config)
         self._load_config()
-        self.vars['ROOT_DIR'] = self.root
+        self.config.ROOT_DIR = self.root
 
     def _load_config(self):
         if os.path.exists(self.path):
