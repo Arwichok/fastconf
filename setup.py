@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="fastconf",
-    version="0.0.4",
+    version="1.0.0",
     author="Arwichok",
     keywords="config",
     license="MIT",

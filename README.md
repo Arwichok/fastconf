@@ -13,50 +13,46 @@ $ pip install fastconf
 #### Example project structure
 
 ```
-__main__.py
+main.py
 core/
     __init__.py
     config.py
 ```
 
-**__main__.py**
+**main.py**    
 ```python
 from core import config
-print('token:', config.token)
+print('TOKEN:', config.TOKEN)
 ```
 **core/config.py**
 ```python
 import fastconf
-token = '...'
-fastconf.config(__name__, 'yml')
+TOKEN = '...'
+fastconf.config(__name__)
 ```
 
 #### Run project:
 ```
-$ python .
-token: ...
+$ python main.py
+TOKEN: ...
 ```
 
 The **config.yml** file is created in the project root directory.
 
 Change him:
 ```
-token: 'MY_TOKEN'
+TOKEN: 'MY_TOKEN'
 ```
 
 #### Run again
 ```
-$ python .
-token: MY_TOKEN
+$ python main.py
+TOKEN: MY_TOKEN
 ```
 
 
-`fastconf.config(name, ext='json', file='config', main=main)`
+`fastconf.config(name, file='config.yml', root=ROOT_DIR)`
 
 `name` - current name of config module   
-`ext`  - type of config file (json, yaml, yml)    
 `file` - name config file    
-`main` - path to config file    
-
-
-`core.config.ROOT_DIR` return the project root directory.
+`dir` - path to config dir    

@@ -1,36 +1,16 @@
 import os
 import sys
-import json
-import pathlib
-
+import logging
 from typing import Callable
 from types import ModuleType
 
 import yaml
 
-__main__ = sys.modules['__main__'].__file__
 
-_avialable_ext = ['json', 'yaml', 'yml']
+ROOT_DIR = os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__))
 
-_dumpnone = lambda d: ''
-_loadnone = lambda s: {}
+log = logging.getLogger(__name__)
 
-_dumpjson = lambda d: json.dumps(d, indent=4)
-_loadjson = lambda s: json.loads(s)
-
-_dumpyaml = lambda d: yaml.dump(d)
-_loadyaml = lambda s: yaml.load(s, Loader=yaml.Loader)
-
-_dumps = {
-    "json": _dumpjson,
-    "yaml": _dumpyaml,
-    "yml": _dumpyaml,
-}
-_loads = {
-    "json": _loadjson,
-    "yaml": _loadyaml,
-    "yml": _loadyaml,
-}
 
 def getvars(module: ModuleType):
     var_names = {}
@@ -41,35 +21,45 @@ def getvars(module: ModuleType):
             var_names[name] = var
     return var_names
 
-class config:
-    def __init__(self, name:str, 
-                 ext='json', file='config', main=__main__):
-        self.config = sys.modules[name]
-        self.ext = ext
-        self.root = os.path.dirname(os.path.abspath(main))
-        self.path = os.path.join(self.root, file+'.'+ext)
-        self.vars = getvars(self.config)
-        self._load_config()
-        self.config.ROOT_DIR = self.root
 
-    def _load_config(self):
+class config:
+    """
+    Generete config file if not exist
+    Set data from file to module
+
+    :name: config module ex: fastconf.config(__name__)
+    :file: config file name
+    :dir:  directory to config file
+    """
+
+    def __init__(self,
+                 name: str,
+                 file: str='config.yml',
+                 root: str=ROOT_DIR):
+        self.config = sys.modules[name]
+        self.path = os.path.join(root, file)
+        self.vars = getvars(self.config)
+        self._generate()
+
+    def _generate(self):
         if os.path.exists(self.path):
             self._load()
-        elif self.ext in _avialable_ext:
-            self._dump()
         else:
-            raise Exception(f"Wrong extension type: {self.ext}\n"
-                f"Avialable: {', '.join(_avialable_ext)}")
+            self._dump()
 
     def _load(self):
         with open(self.path, 'r') as file:
-            load = _loads.get(self.ext) or _loadnone
-            loadvars = load(file.read())
-            for k, v in loadvars.items():
-                defvar = getattr(self.config, k)
-                setattr(self.config, k, type(defvar)(v))
+            load_vars = yaml.load(file, Loader=yaml.Loader)
+            for k, v in load_vars.items():
+                if k not in self.vars:
+                    log.warning(f'Wrong field in config file: {k}')
+                    continue
+                def_var = getattr(self.config, k)
+                var_type = type(def_var)
+                if def_var is None:
+                    setattr(self.config, k, v)
+                setattr(self.config, k, var_type(v))
 
     def _dump(self):
         with open(self.path, 'w') as file:
-            dump = _dumps.get(self.ext) or _dumpnone
-            file.write(dump(self.vars))
+            file.write(yaml.dump(self.vars))
